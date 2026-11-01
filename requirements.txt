@@ -1,2 +1,4 @@
 python-jobspy==1.4.1
+requests
+beautifulsoup4
 pytest

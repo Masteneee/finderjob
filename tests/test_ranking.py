@@ -51,6 +51,12 @@ def test_duplicates_across_sites_removed():
     assert len(ranking.remove_duplicates(jobs)) == 2
 
 
+def test_duplicate_gives_its_pay_to_the_kept_copy():
+    kept = ranking.remove_duplicates([job("Line Cook", "Joe Beef"),
+                                      job("Line Cook", "Joe Beef", pay=19)])
+    assert len(kept) == 1 and ranking.hourly_pay(kept[0]) == 19
+
+
 def test_filters():
     kept, rejected = ranking.rank([
         job("Senior Line Cook"),          # bad word

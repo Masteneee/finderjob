@@ -55,15 +55,19 @@ def days_old(job, today):
 
 
 def remove_duplicates(jobs):
-    """The same job is often on Indeed AND LinkedIn AND Google. Keep the first one."""
-    seen = set()
+    """The same job is often on Indeed AND Job Bank AND Google. Keep the first one,
+    but if it hides the pay and a copy shows it, take the pay from the copy."""
+    first_copy = {}   # (title, company) -> the job we kept
     unique = []
     for job in jobs:
         key = (str(job.get("title", "")).lower().strip(),
                str(clean(job.get("company")) or "").lower().strip())
-        if key not in seen:
-            seen.add(key)
+        if key not in first_copy:
+            first_copy[key] = job
             unique.append(job)
+        elif hourly_pay(first_copy[key]) is None and hourly_pay(job) is not None:
+            for field in ("min_amount", "max_amount", "interval"):
+                first_copy[key][field] = job.get(field)
     return unique
 
 

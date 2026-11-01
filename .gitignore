@@ -1,6 +1,7 @@
 # Your personal answers and results stay on your computer
 preferences.json
 seen_jobs.json
+api_keys.json
 results/
 
 __pycache__/

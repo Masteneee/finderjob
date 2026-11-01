@@ -1,6 +1,7 @@
 """
-Job Finder: asks what job you want, searches Indeed, LinkedIn, Google Jobs
-(and optionally Glassdoor / ZipRecruiter), then ranks everything it found.
+Job Finder: asks what job you want, searches Indeed, LinkedIn, Google Jobs,
+Job Bank, Adzuna, Jooble, Remotive, Glassdoor and ZipRecruiter (you pick),
+then ranks everything it found.
 
 Run it with:   python job_finder.py
 
@@ -26,13 +27,12 @@ def main():
 
     print("\nSearching (this can take a minute)...")
     found = search.search_all(prefs)                    # step 2
-    if found.empty:
+    if not found:
         print("\nNothing came back. Check your internet connection, or try again"
               " in a few minutes (sites sometimes block too many searches in a row).")
         return
 
-    jobs = found.to_dict("records")   # DataFrame -> plain list of dicts
-    jobs, rejected = ranking.rank(jobs, prefs)          # step 3
+    jobs, rejected = ranking.rank(found, prefs)         # step 3
     print(f"\n{len(found)} results, {len(found) - len(jobs) - rejected} duplicates,"
           f" {rejected} filtered out by your answers.")
 

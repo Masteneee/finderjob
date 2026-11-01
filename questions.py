@@ -10,14 +10,19 @@ from pathlib import Path
 
 PREFS_FILE = Path(__file__).parent / "preferences.json"
 
-# The job sites JobSpy knows how to search. The key is what you type,
-# the value is the name JobSpy expects.
+import more_sites
+
+# Every site you can pick. The key is what you type, the value is shown as a hint.
 SITES = {
-    "indeed": "indeed",
-    "linkedin": "linkedin",
-    "google": "google",        # Google Jobs pulls from many smaller sites
-    "glassdoor": "glassdoor",
-    "ziprecruiter": "zip_recruiter",
+    "indeed": "Indeed",
+    "linkedin": "LinkedIn (blocks you if you search too often)",
+    "google": "Google Jobs (collects jobs from many smaller sites)",
+    "jobbank": "Job Bank / Guichet-Emplois, Government of Canada",
+    "adzuna": "Adzuna (needs a free key)",
+    "jooble": "Jooble (needs a free key)",
+    "remotive": "Remotive (remote jobs only)",
+    "glassdoor": "Glassdoor (often blocks searches)",
+    "ziprecruiter": "ZipRecruiter (mostly USA)",
 }
 
 JOB_TYPES = {
@@ -40,7 +45,7 @@ DEFAULTS = {
     "min_hourly_pay": 0,
     "good_words": [],
     "bad_words": ["senior", "manager", "director"],
-    "sites": ["indeed", "linkedin", "google"],
+    "sites": ["indeed", "linkedin", "google", "jobbank"],
     "results_per_site": 20,
 }
 
@@ -99,12 +104,21 @@ def ask_choice(question, choices, default):
 
 
 def ask_sites(default):
-    print("  Sites available: " + ", ".join(SITES))
+    print("  Sites you can search (type 'all' for every one):")
+    for name, hint in SITES.items():
+        print(f"    {name:13} {hint}")
     while True:
         picked = ask_list("Which sites should I search?", default)
+        if [s.lower() for s in picked] == ["all"]:
+            picked = list(SITES)
         unknown = [s for s in picked if s.lower() not in SITES]
         if picked and not unknown:
-            return [s.lower() for s in picked]
+            # Sites that need a key: ask for it now, drop the site if you skip
+            usable = more_sites.ask_missing_keys([s.lower() for s in picked])
+            if usable:
+                return usable
+            print("  No usable sites left, pick again.")
+            continue
         print(f"  I don't know these sites: {', '.join(unknown) or '(none picked)'}")
 
 
@@ -138,6 +152,7 @@ def interview():
         print("Last time you searched with:")
         show(saved)
         if ask_yes_no("Use the same answers?", True):
+            saved["sites"] = more_sites.ask_missing_keys(saved["sites"]) or ["indeed"]
             return saved
     d = saved or DEFAULTS   # previous answers become the defaults
 
