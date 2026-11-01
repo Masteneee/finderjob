@@ -82,6 +82,22 @@ def test_jobbank_redesign_gives_empty_list(capsys):
     assert "layout may have changed" in capsys.readouterr().out
 
 
+# ---------- Job Bank city lookup ----------
+
+def test_jobbank_picks_city_in_right_province(monkeypatch):
+    more_sites._city_ids.clear()
+    monkeypatch.setattr(more_sites, "get_json", lambda *a, **k: {"response": {"docs": [
+        {"name": "Montreal Lake", "province_name": "Saskatchewan", "city_id": "30828"},
+        {"name": "Montréal", "province_name": "Québec", "city_id": "22446"}]}})
+    assert more_sites.jobbank_city_id("Montreal, QC") == ("22446", "QC")
+
+
+def test_jobbank_unknown_city(monkeypatch):
+    more_sites._city_ids.clear()
+    monkeypatch.setattr(more_sites, "get_json", lambda *a, **k: {"response": {"docs": []}})
+    assert more_sites.jobbank_city_id("Nowhereville, QC") == (None, "QC")
+
+
 # ---------- the APIs, with a fake get_json ----------
 
 def fake_answer(monkeypatch, answer):

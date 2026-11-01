@@ -143,13 +143,51 @@ def ask_missing_keys(sites):
 
 # ---------- Job Bank (Government of Canada) ----------
 
+PROVINCES = {"québec": "QC", "quebec": "QC", "ontario": "ON", "british columbia": "BC",
+             "alberta": "AB", "manitoba": "MB", "saskatchewan": "SK", "nova scotia": "NS",
+             "new brunswick": "NB", "newfoundland and labrador": "NL",
+             "prince edward island": "PE", "northwest territories": "NT",
+             "nunavut": "NU", "yukon": "YT"}
+
+_city_ids = {}   # remember lookups so we ask Job Bank only once per run
+
+
+def jobbank_city_id(location):
+    """Job Bank ignores a typed location in the address. Its website first turns the
+    city name into a number (Montréal = 22446) with this lookup service, then
+    searches with mid=<that number>. We do the same.
+    Returns (city_id or None, province code or None)."""
+    city, _, province = location.partition(",")
+    province = province.strip().upper()[:2] or None
+    if location not in _city_ids:
+        data = get_json("GET", "https://www.jobbank.gc.ca/core/ta-cityprovsuggest_en/select",
+                        params={"q": city.strip(), "fq": "NOT postalcode_cnt:0",
+                                "wt": "json", "rows": 10}, headers=BROWSER)
+        cities = data.get("response", {}).get("docs", [])
+        # "Montreal" also matches Montreal Lake (SK), so prefer the right province
+        same_province = [c for c in cities
+                         if PROVINCES.get(str(c.get("province_name")).lower()) == province]
+        best = (same_province or cities or [{}])[0]
+        _city_ids[location] = best.get("city_id")
+    return _city_ids[location], province
+
+
 def search_jobbank(title, prefs):
     """Job Bank has no public API, so we download the search page and pick
     the jobs out of the HTML with BeautifulSoup."""
-    page = requests.get(
-        "https://www.jobbank.gc.ca/jobsearch/jobsearch",
-        params={"searchstring": title, "locationstring": prefs["location"], "sort": "D"},
-        headers=BROWSER, timeout=TIMEOUT)
+    params = {"term": title, "sort": "D"}
+    city_id, province = jobbank_city_id(prefs["location"])
+    if city_id:
+        params["mid"] = city_id
+        params["d"] = int(prefs["distance_km"])   # Job Bank uses km
+    elif province:
+        print(f"    (Job Bank doesn't know '{prefs['location']}', searching all of {province})")
+        params["fprov"] = province
+    else:
+        print(f"    (Job Bank doesn't know '{prefs['location']}', searching all of Canada)")
+
+    page = requests.get("https://www.jobbank.gc.ca/jobsearch/jobsearch",
+                        params=params, headers=BROWSER, timeout=TIMEOUT)
     page.raise_for_status()
     return parse_jobbank_html(page.text)[: int(prefs["results_per_site"])]
 
