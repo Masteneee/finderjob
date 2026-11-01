@@ -30,37 +30,39 @@ GitHub. Press Enter instead to skip that site.
   *Application ID* and *Application Key*.
 - Jooble: fill the form at https://jooble.org/api/about, the key comes by email.
 
-## Setup (once)
+## Start it
 
-You need Python 3.10 or newer. In a terminal, inside this folder:
+You need Python 3.10 or newer (free at https://www.python.org/downloads/; on
+Windows, tick **"Add python.exe to PATH"** during the install).
+
+- **Windows:** double-click `start.bat`
+- **Mac:** double-click `start.command`
+- **Linux:** run `./start.command` in a terminal
+
+The first launch takes a minute: it creates a private Python folder (`.venv`)
+and installs the libraries. After that it starts right away. When the search
+ends, the results page opens in your browser by itself.
+
+<details><summary>Starting it by hand instead</summary>
 
 ```bash
 python -m venv .venv
 ```
 
-On Mac/Linux:
-
-```bash
-source .venv/bin/activate
-```
-
-On Windows:
-
-```bash
-.venv\Scripts\activate
-```
-
-Then:
+Then `source .venv/bin/activate` (Mac/Linux) or `.venv\Scripts\activate`
+(Windows), and:
 
 ```bash
 pip install -r requirements.txt
 ```
 
-## Use it
-
 ```bash
 python job_finder.py
 ```
+
+</details>
+
+## Using it
 
 It asks about 12 questions (job titles, city, distance, part-time or
 full-time, minimum pay, words you want, words you don't want, which sites...).

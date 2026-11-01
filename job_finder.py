@@ -12,6 +12,8 @@ The program is split in 4 steps, one file each:
   4. report.py     print the top jobs and save them to CSV + HTML
 """
 
+import webbrowser
+
 import questions
 import ranking
 import report
@@ -41,6 +43,7 @@ def main():
     if jobs:
         csv_path, html_path = report.save_all(jobs, prefs)
         print(f"\nAll {len(jobs)} jobs saved to:\n  {html_path}\n  {csv_path}")
+        webbrowser.open(html_path.resolve().as_uri())   # show the results page right away
 
 
 if __name__ == "__main__":

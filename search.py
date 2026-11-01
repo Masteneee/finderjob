@@ -9,12 +9,25 @@ Two kinds of sites:
 Everything comes back as one list of job dicts.
 """
 
+import logging
+
 from jobspy import scrape_jobs
 
 import more_sites
 from questions import JOB_TYPES
 
 KM_PER_MILE = 1.609
+
+# JobSpy prints its own error lines. We already print a shorter one per site,
+# so tell JobSpy's logger to stay silent (verbose=None below keeps this setting).
+logging.getLogger("jobspy").setLevel(logging.CRITICAL)
+
+
+def short(error):
+    """Long technical errors -> one readable line."""
+    text = " ".join(str(error).split())
+    return text if len(text) <= 160 else text[:157] + "..."
+
 
 # The name you type -> the name JobSpy expects
 JOBSPY_SITES = {
@@ -42,12 +55,12 @@ def search_jobspy(title, sites, prefs):
         results_wanted=int(prefs["results_per_site"]),
         hours_old=int(prefs["max_days_old"] * 24),
         country_indeed=prefs["country"],
-        verbose=0,  # keep the terminal quiet, we print our own messages
+        verbose=None,  # don't touch the logging level we set above
     )
 
     # JobSpy stores per-site problems here instead of crashing
     for site, error in jobs.attrs.get("errors", {}).items():
-        print(f"    ! {site} failed: {error}")
+        print(f"    ! {site} failed: {short(error)}")
 
     return jobs.to_dict("records")   # DataFrame -> plain list of dicts
 
@@ -73,13 +86,13 @@ def search_all(prefs):
             try:
                 found += search_jobspy(title, jobspy_sites, prefs)
             except Exception as error:   # a bad answer or no internet shouldn't kill the program
-                print(f"    ! {', '.join(jobspy_sites)} failed: {error}")
+                print(f"    ! {', '.join(jobspy_sites)} failed: {short(error)}")
 
         for site in other_sites:
             try:
                 found += more_sites.EXTRA_SITES[site](title, prefs)
             except Exception as error:
-                print(f"    ! {site} failed: {error}")
+                print(f"    ! {site} failed: {short(error)}")
 
         for job in found:
             job["searched_for"] = title
