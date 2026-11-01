@@ -1,0 +1,8 @@
+# Your personal answers and results stay on your computer
+preferences.json
+seen_jobs.json
+results/
+
+__pycache__/
+.pytest_cache/
+.venv/
